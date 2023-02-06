@@ -16,34 +16,29 @@ from utils import (
     get_bboxes
 )
 from loss import YoloLoss
+import os
 
 seed = 0
 torch.manual_seed(seed)
 
 # Hyperparameters etc. 
 LEARNING_RATE = 2e-5
-DEVICE = "cpu"
-BATCH_SIZE = 1 # 64 in original paper
+DEVICE = "mps" if getattr(torch, "mps", False) else "cuda" if torch.cuda.is_available() else "cpu"
+BATCH_SIZE = 8# 64 in original paper
 WEIGHT_DECAY = 0
 EPOCHS = 10
 NUM_WORKERS = 0
 PIN_MEMORY = True
 IMG_DIR = "data/images"
 LABEL_DIR = "data/labels"
+PRETRAIN = "./yolov1.pt"
 
-
-class Compose(object):
-    def __init__(self, transforms):
-        self.transforms = transforms
-
-    def __call__(self, img, bboxes):
-        for t in self.transforms:
-            img, bboxes = t(img), bboxes
-
-        return img, bboxes
-
-
-transform = Compose([transforms.Resize((448, 448)), transforms.ToTensor(),])
+transform = transforms.Compose(
+    [
+        transforms.Resize((448, 448)),
+        transforms.ToTensor(),
+    ]
+)
 
 
 def train_fn(train_loader, model, optimizer, loss_fn, epoch):
@@ -97,14 +92,31 @@ def main():
         batch_size=BATCH_SIZE,
         num_workers=NUM_WORKERS,
         pin_memory=PIN_MEMORY,
-        shuffle=True,
-        drop_last=True,
+        shuffle=False,
+        drop_last=False,
     )
 
-    for epoch in range(EPOCHS):
-        
+    if not os.path.exists(PRETRAIN) or PRETRAIN == None:
+        for epoch in range(EPOCHS):
+            
+            pred_boxes, target_boxes = get_bboxes(
+                train_loader, model, iou_threshold=0.1, threshold=0.1, device=DEVICE
+            )
+
+            mean_avg_prec = mean_average_precision(
+                pred_boxes, target_boxes, iou_threshold=0.1, box_format="midpoint"
+            )
+            print(f"Train mAP: {mean_avg_prec}")
+
+            train_fn(train_loader, model, optimizer, loss_fn, epoch)
+            
+        # save model
+        torch.save(model.state_dict(), "yolov1.pt")
+        print(f'Checkpoint saved at "yolov1.pt"')
+    else:
+        model.load_state_dict(torch.load(PRETRAIN))
         pred_boxes, target_boxes = get_bboxes(
-            train_loader, model, iou_threshold=0.1, threshold=0.1
+            train_loader, model, iou_threshold=0.1, threshold=0.1, device=DEVICE
         )
 
         mean_avg_prec = mean_average_precision(
@@ -112,7 +124,14 @@ def main():
         )
         print(f"Train mAP: {mean_avg_prec}")
 
-        train_fn(train_loader, model, optimizer, loss_fn, epoch)
+    pred_boxes, target_boxes = get_bboxes(
+        test_loader, model, iou_threshold=0.1, threshold=0.1, device=DEVICE
+    )
+
+    mean_avg_prec = mean_average_precision(
+        pred_boxes, target_boxes, iou_threshold=0.1, box_format="midpoint"
+    )
+    print(f"Test mAP: {mean_avg_prec}")
 
 
 if __name__ == "__main__":

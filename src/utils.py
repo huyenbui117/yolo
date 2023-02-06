@@ -207,7 +207,7 @@ def get_bboxes(
     threshold,
     pred_format="cells",
     box_format="midpoint",
-    device="cuda",
+    device="cpu",
 ):
     all_pred_boxes = []
     all_true_boxes = []
@@ -217,8 +217,8 @@ def get_bboxes(
     train_idx = 0
 
     for batch_idx, (x, labels) in enumerate(loader):
-        # x = x.to(device)
-        # labels = labels.to(device)
+        x = x.to(device)
+        labels = labels.to(device)
 
         with torch.no_grad():
             predictions = model(x)
