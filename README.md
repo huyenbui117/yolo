@@ -3,7 +3,7 @@ YOLO from scratch
 ## Overview of YOLO algorithm
 
 Dataset YOLO was trained on PASCAL VOC Dataset (20 classes) (most papers use COCO instead)
-
+hộp giới hạn
 1. [Idea behind Algorithm](#idea-behind-algorithm)
 2. [Model Architeture](#model-architeture)
 3. [Loss Function](#loss-function)
@@ -36,11 +36,11 @@ Output: Tensor of predictions: $7 \times 7 \times 30$
 
 ## Loss Function
 
-$\displaystyle\mathbf{\lambda_{coord}}\sum_{j=0}^{S^2}\sum_{j=0}^B\mathbb{I}_{ij}^{obj}[(x_j-\hat x_i)^2+(y_i-\hat y_i)^2]
-+\mathbf{\lambda_{coord}}\sum_{j=0}^{S^2}\sum_{j=0}^B\mathbb{I}_{ij}^{obj}[(\sqrt{w_j}-\sqrt{\hat w_i})^2+(\sqrt{h_j}-\sqrt{\hat h_i})^2]
-+\sum_{j=0}^{S^2}\sum_{j=0}^B\mathbb{I}_{ij}^{obj}(C_i-\hat C_i)^2 
-+\lambda_{noobj}\sum_{j=0}^{S^2}\sum_{j=0}^B\mathbb{I}_{ij}^{noobj}(C_i-\hat C_i)^2  
-+\sum_{j=0}^{S^2}\sum_{j=0}^B\mathbb{I}_{i}^{obj}\sum_{c \in \mathrm{classes}}(p_i(c)-\hat p_i(c))^2$
+$\lambda_{coord}\sum_{j=0}^{S^2}\sum_{j=0}^BI_{ij}^{obj}[(x_j-\hat x_i)^2+(y_i-\hat y_i)^2]
++\lambda_{coord}\sum_{j=0}^{S^2}\sum_{j=0}^BI_{ij}^{obj}[(\sqrt{w_j}-\sqrt{\hat w_i})^2+(\sqrt{h_j}-\sqrt{\hat h_i})^2]
++\sum_{j=0}^{S^2}\sum_{j=0}^BI_{ij}^{obj}(C_i-\hat C_i)^2 
++\lambda_{noobj}\sum_{j=0}^{S^2}\sum_{j=0}^BI_{ij}^{noobj}(C_i-\hat C_i)^2  
++\sum_{j=0}^{S^2}\sum_{j=0}^BI_{i}^{obj}\sum_{c \in {classes}}(p_i(c)-\hat p_i(c))^2$
 
 ## Data
 VOC Dataset
